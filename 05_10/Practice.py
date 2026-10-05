@@ -41,11 +41,7 @@ class PartyReaderInterface(ABC):
         pass
 
 
-class PartyRegistryInterface(PartyWriterInterface, PartyReaderInterface):
-    """Объединенный интерфейс для реестра партий"""
-    pass
-
-class PartyRegistry(PartyRegistryInterface):
+class PartyRegistry(PartyWriterInterface,PartyReaderInterface):
     def __init__(self) -> None:
         self.__parties: list[Party] = []
 
@@ -200,13 +196,25 @@ class PartyCreatorInterface(ABC):
         pass
 
 
-class RepresentativePartyCreator(PartyCreatorInterface):
+class RepresentativeCreatorInterface(ABC):
+    @abstractmethod
+    def create(self,name: str,deputies_count: int) -> RepresentativeParty:
+        pass
+
+
+
+class RepresentativePartyCreator(RepresentativeCreatorInterface):
     def create(self,name: str,deputies_count: int) -> RepresentativeParty:
         party = RepresentativeParty(name,deputies_count)
         return party
 
 
-class BudgetFundedPartyCreator(PartyCreatorInterface):
+class BudgetCreatorInterface(ABC):
+    @abstractmethod
+    def create(self,name: str,allocation_amount: int) -> BudgetFundedParty:
+        pass
+
+class BudgetFundedPartyCreator(BudgetCreatorInterface):
     def create(self,name: str,allocation_amount: int) -> BudgetFundedParty:
         party = BudgetFundedParty(name, allocation_amount)
         return party
@@ -252,9 +260,21 @@ class PartyPrinter(PrinterInterface):
             format_party=self.__formatter.format(party)
             self.__output.write(format_party)
 
+class PartyInputScenarioInterface(ABC):
+    @abstractmethod
+    def run(self) -> None:
+        pass
 
-class PartyInputScenario:
-    def __init__(self,party_type_input: InputStringInterface,party_name_input: InputStringInterface,deputies_count_input: InputIntInterface,allocation_amount_input: InputIntInterface,representative_creator: PartyCreatorInterface,budget_creator: PartyCreatorInterface,registry: PartyWriterInterface | PartyReaderInterface) -> None:
+
+class PartyInputScenario(PartyInputScenarioInterface):
+    def __init__(self,
+        party_type_input: InputStringInterface,
+        party_name_input: InputStringInterface,
+        deputies_count_input: InputIntInterface,
+        allocation_amount_input: InputIntInterface,
+        representative_creator: PartyCreatorInterface,
+        budget_creator: PartyCreatorInterface,
+        registry: PartyWriterInterface) -> None:
         self.__party_type_input = party_type_input
         self.__party_name_input = party_name_input
         self.__deputies_count_input = deputies_count_input
@@ -288,10 +308,10 @@ class PartyInputScenario:
 class Task:
     def __init__(
         self,
-        input_scenario: PartyInputScenario,
-        registry: PartyRegistryInterface,
-        party_filter: PartyFilter,
-        printer: PartyPrinter,
+        input_scenario: PartyInputScenarioInterface,
+        registry: PartyReaderInterface,
+        party_filter: PartyFilterInterface,
+        printer: PrinterInterface,
     ):
         self.__input_scenario = input_scenario
         self.__registry = registry
