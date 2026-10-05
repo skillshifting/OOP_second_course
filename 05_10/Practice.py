@@ -41,7 +41,11 @@ class PartyReaderInterface(ABC):
         pass
 
 
-class PartyRegistry(PartyWriterInterface,PartyReaderInterface):
+class PartyRegistryInterface(PartyWriterInterface, PartyReaderInterface):
+    """Объединенный интерфейс для реестра партий"""
+    pass
+
+class PartyRegistry(PartyRegistryInterface):
     def __init__(self) -> None:
         self.__parties: list[Party] = []
 
@@ -64,7 +68,7 @@ class FirstLetterCheckerInterface(ABC):
 
 class RequiredFirstLetterChecker(FirstLetterCheckerInterface):
     def check(self, party: Party) -> bool:
-        name = party.name
+        name = party.name.strip()
 
         return name[0].upper() in 'А Б В Г Д Е Ё Ж З И Й К'.split()
 
@@ -179,7 +183,7 @@ class AllocationAmountInput(InputIntInterface):
     def __init__(self, validator: CountValidatorInterface) -> None:
         self.__validator = validator
 
-    def input(self) -> input:
+    def input(self) -> int:
         while True:
             try:
                 value = input("Введите размер ассигнования: ")
@@ -220,7 +224,7 @@ class PartyFormatter(FormatterInterface):
         
         if isinstance(party,BudgetFundedParty):
             return f'Партия "{party.name}", ассигнование: {party.allocation_amount}'
-
+        return
 
 class OutputInterface(ABC):
     @abstractmethod
@@ -285,10 +289,10 @@ class Task:
     def __init__(
         self,
         input_scenario: PartyInputScenario,
-        registry: PartyRegist,
+        registry: PartyRegistryInterface,
         party_filter: PartyFilter,
         printer: PartyPrinter,
-    ) -> None:
+    ):
         self.__input_scenario = input_scenario
         self.__registry = registry
         self.__party_filter = party_filter
