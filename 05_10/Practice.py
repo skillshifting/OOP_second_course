@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class PartyInterface(ABC):
     @abstractmethod
     def get_name(self) -> str:
@@ -13,23 +14,31 @@ class Party(PartyInterface):
         return self.__name
 
 
-class BudgetFundedParty(Party):
+class BudgetFundedPartyInterface(ABC):
+    @abstractmethod
+    def get_allocation_amount(self)-> int:
+        pass
+
+class BudgetFundedParty(Party,BudgetFundedPartyInterface):
     def __init__(self, name: str, allocation_amount: int) -> None:
         super().__init__(name)
         self.__allocation_amount = allocation_amount
 
-    @property
-    def allocation_amount(self) -> int:
+    def get_allocation_amount(self) -> int:
         return self.__allocation_amount
 
 
-class RepresentativeParty(Party):
+class RepresentativePartyInterface(ABC):
+    @abstractmethod
+    def get_deputies_count(self)-> int:
+        pass
+
+class RepresentativeParty(Party,RepresentativePartyInterface):
     def __init__(self, name: str, deputies_count: int) -> None:
         super().__init__(name)
         self.__deputies_count = deputies_count
 
-    @property
-    def deputies_count(self) -> int:
+    def get_deputies_count(self) -> int:
         return self.__deputies_count
 
 
@@ -70,7 +79,7 @@ class RequiredFirstLetterChecker(FirstLetterCheckerInterface):
     def check(self, party: PartyInterface) -> bool:
         name = party.get_name().strip()
 
-        return name[0].upper() in 'А Б В Г Д Е Ё Ж З И Й К'.split()
+        return name[0].upper() in ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К']
 
 
 class PartyFilterInterface(ABC):
@@ -103,7 +112,7 @@ class PartyNameValidator(PartyNameValidatorInterface):
         name = name.strip()
         if not name:
             raise ValueError("Имя не должно быть пустым")
-        
+
         if not any(char.isalpha() for char in name):
             raise ValueError("Имя должно включать в себя буквы")
         return name
@@ -230,27 +239,30 @@ class BudgetFundedPartyCreator(BudgetCreatorInterface):
 
 class FormatterInterface(ABC):
     @abstractmethod
-    def format(self, party:Party) -> str:
+    def format(self, party:Party) -> str|None:
         pass
+
+class RepresentativePartyFormatter(FormatterInterface):
+    def format(self,party:Repre)
 
 
 class PartyFormatter(FormatterInterface):
-    def format(self, party: Party) -> str:
+    def format(self, party: Party) -> str|None:
         if isinstance(party,RepresentativeParty):
             return f'Партия "{party.get_name()}", количество депутатов: {party.deputies_count}'
-        
+
         if isinstance(party,BudgetFundedParty):
             return f'Партия "{party.get_name()}", ассигнование: {party.allocation_amount}'
         return
 
 class OutputInterface(ABC):
     @abstractmethod
-    def write(self,message:str) -> None:
+    def write(self,message:str|None) -> None:
         pass
 
 
 class ConsoleOutput(OutputInterface):
-    def write(self, message: str) -> None:
+    def write(self, message: str|None) -> None:
         print(message)
 
 
@@ -293,15 +305,15 @@ class PartyInputScenario(PartyInputScenarioInterface):
         self.__registry = registry
 
     def run(self) -> None:
-        
-        while True:        
+
+        while True:
             party_type = self.__party_type_input.input()
             if party_type =='стоп':
                 break
 
-            
+
             name = self.__party_name_input.input()
-                
+
             if party_type =='обычная':
                 deputies = self.__deputies_count_input.input()
                 representative_party = self.__representative_creator.create(name=name,deputies_count=deputies)
@@ -343,7 +355,7 @@ if __name__ == "__main__":
     name_validator = PartyNameValidator()
     deputies_validator = DeputiesCountValidator()
     allocation_validator = AllocationAmountValidator()
-    
+
     letter_checker = RequiredFirstLetterChecker()
     formatter = PartyFormatter()
     output = ConsoleOutput()
