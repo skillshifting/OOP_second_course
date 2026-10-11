@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 
-class Party:
+class PartyInterface(ABC):
+    @abstractmethod
+    def get_name(self) -> str:
+        pass
+
+class Party(PartyInterface):
     def __init__(self, name: str) -> None:
         self.__name = name
 
-    @property
-    def name(self) -> str:
+    def get_name(self) -> str:
         return self.__name
 
 
@@ -31,47 +35,47 @@ class RepresentativeParty(Party):
 
 class PartyWriterInterface(ABC):
     @abstractmethod
-    def add_party(self, party:Party):
+    def add_party(self, party:PartyInterface):
         pass
 
 
 class PartyReaderInterface(ABC):
     @abstractmethod
-    def get_parties(self) -> list[Party]:
+    def get_parties(self) -> list[PartyInterface]:
         pass
 
 
 class PartyRegistry(PartyWriterInterface,PartyReaderInterface):
     def __init__(self) -> None:
-        self.__parties: list[Party] = []
+        self.__parties: list[PartyInterface] = []
 
-    def add_party(self, party: Party) -> None:
-        if not isinstance(party, Party):
+    def add_party(self, party: PartyInterface) -> None:
+        if not isinstance(party, PartyInterface):
             raise TypeError(
                 "Можно добавлять только объект класса Party"
             )
 
         self.__parties.append(party)
 
-    def get_parties(self) -> list[Party]:
+    def get_parties(self) -> list[PartyInterface]:
         return self.__parties.copy()
 
 
 class FirstLetterCheckerInterface(ABC):
     @abstractmethod
-    def check(self,party:Party) -> bool:
+    def check(self,party:PartyInterface) -> bool:
         pass
 
 class RequiredFirstLetterChecker(FirstLetterCheckerInterface):
-    def check(self, party: Party) -> bool:
-        name = party.name.strip()
+    def check(self, party: PartyInterface) -> bool:
+        name = party.get_name().strip()
 
         return name[0].upper() in 'А Б В Г Д Е Ё Ж З И Й К'.split()
 
 
 class PartyFilterInterface(ABC):
     @abstractmethod
-    def filter(self, parties: list[Party]) -> list[Party]:
+    def filter(self, parties: list[PartyInterface]) -> list[PartyInterface]:
         pass
 
 
@@ -79,7 +83,7 @@ class PartyFilter(PartyFilterInterface):
     def __init__(self, checker: FirstLetterCheckerInterface) -> None:
         self.__checker = checker
 
-    def filter(self, parties: list[Party]) -> list[Party]:
+    def filter(self, parties: list[PartyInterface]) -> list[PartyInterface]:
         filtered_parties=[]
         for party in parties:
             if self.__checker.check(party):
@@ -121,13 +125,13 @@ class AllocationAmountValidator(CountValidatorInterface):
             raise ValueError("Ассигнование должно быть больше нуля")
         return allocation_amount
 
-class InputStringInterface(ABC):
+class PartyTypeInputInterface(ABC):
     @abstractmethod
     def input(self) -> str:
         pass
 
 
-class PartyTypeInput(InputStringInterface):
+class PartyTypeInput(PartyTypeInputInterface):
     def input(self) -> str:
         while True:
             print()
@@ -143,7 +147,12 @@ class PartyTypeInput(InputStringInterface):
             print("Неверный тип партии")
 
 
-class PartyNameInput(InputStringInterface):
+class PartyNameInputInterface(ABC):
+    @abstractmethod
+    def input(self) -> str:
+        pass
+
+class PartyNameInput(PartyNameInputInterface):
     def __init__(self, validator: PartyNameValidatorInterface) -> None:
         self.__validator = validator
 
@@ -157,12 +166,12 @@ class PartyNameInput(InputStringInterface):
                 print(error)
 
 
-class InputIntInterface(ABC):
+class DeputiesCountInputInterface(ABC):
     @abstractmethod
     def input(self) -> int:
         pass
 
-class DeputiesCountInput(InputIntInterface):
+class DeputiesCountInput(DeputiesCountInputInterface):
     def __init__(self, validator: CountValidatorInterface) -> None:
         self.__validator = validator
 
@@ -174,8 +183,13 @@ class DeputiesCountInput(InputIntInterface):
             except ValueError as error:
                 print(error)
 
+class AllocationAmountInputInterface(ABC):
+    @abstractmethod
+    def input(self) -> int:
+        pass
 
-class AllocationAmountInput(InputIntInterface):
+
+class AllocationAmountInput(AllocationAmountInputInterface):
     def __init__(self, validator: CountValidatorInterface) -> None:
         self.__validator = validator
 
@@ -189,11 +203,6 @@ class AllocationAmountInput(InputIntInterface):
                 return self.__validator.validate(amount)
             except ValueError as error:
                 print(error)
-
-class PartyCreatorInterface(ABC):
-    @abstractmethod
-    def create(self, name: str, count_amount:int) -> RepresentativeParty | BudgetFundedParty:
-        pass
 
 
 class RepresentativeCreatorInterface(ABC):
@@ -228,10 +237,10 @@ class FormatterInterface(ABC):
 class PartyFormatter(FormatterInterface):
     def format(self, party: Party) -> str:
         if isinstance(party,RepresentativeParty):
-            return f'Партия "{party.name}", количество депутатов: {party.deputies_count}'
+            return f'Партия "{party.get_name()}", количество депутатов: {party.deputies_count}'
         
         if isinstance(party,BudgetFundedParty):
-            return f'Партия "{party.name}", ассигнование: {party.allocation_amount}'
+            return f'Партия "{party.get_name()}", ассигнование: {party.allocation_amount}'
         return
 
 class OutputInterface(ABC):
@@ -268,12 +277,12 @@ class PartyInputScenarioInterface(ABC):
 
 class PartyInputScenario(PartyInputScenarioInterface):
     def __init__(self,
-        party_type_input: InputStringInterface,
-        party_name_input: InputStringInterface,
-        deputies_count_input: InputIntInterface,
-        allocation_amount_input: InputIntInterface,
-        representative_creator: PartyCreatorInterface,
-        budget_creator: PartyCreatorInterface,
+        party_type_input: PartyTypeInputInterface,
+        party_name_input: PartyNameInputInterface,
+        deputies_count_input: DeputiesCountInputInterface,
+        allocation_amount_input: AllocationAmountInputInterface,
+        representative_creator: RepresentativeCreatorInterface,
+        budget_creator: BudgetCreatorInterface,
         registry: PartyWriterInterface) -> None:
         self.__party_type_input = party_type_input
         self.__party_name_input = party_name_input
@@ -305,7 +314,12 @@ class PartyInputScenario(PartyInputScenarioInterface):
                 self.__registry.add_party(budget_party)
 
 
-class Task:
+class TaskInterface(ABC):
+    @abstractmethod
+    def run(self) -> None:
+        pass
+
+class Task(TaskInterface):
     def __init__(
         self,
         input_scenario: PartyInputScenarioInterface,
