@@ -5,19 +5,9 @@
 
 Вариант 30
 
-Классы, которые остались после внедрения принципа S:
-
-RequiredFirstLetterChecker
-PartyFilter
-PartyNameValidator
-DeputiesCountValidator
-AllocationAmountValidator
-PartyTypeInput
-PartyNameInput
-DeputiesCountInput
-AllocationAmountInput
-RepresentativePartyCreator
-BudgetFundedPartyCreator
-PartyFormatter
-ConsoleOutput
-PartyPrinter
+| Буква | Как объяснить | Что показать |
+|-------|---------------|--------------|
+| **S (SRP) Single Responsibility Principle** | Принцип единственной ответственности - Формулировки: 1. Каждый класс должен иметь строго одну ответственность. 2. Причина для изменения функции должна быть только одна. Любое действие, которое может быть реализовано несколькими способами, нужно реализовать отдельно | `PartyFilter`, `RequiredFirstLetterChecker` |
+| **D (DIP) Dependency Inversion Principle** | Вопрос препода: почему inversion? Формулировки: Почти каждый класс должен реализовывать интерфейс. | Конструктор `Task` |
+| **I (ISP) Interface Segregation Principle** | Принцип разделения интерфейсов Интерфейс нужно разделять на минимальные кусочки кода; в конструкторы и методы должны передаваться максимально узкие интерфейсы. | `PartyReaderInterface`, `PartyWriterInterface` |
+| **O (OCP) Open/Close Principle** | Класс открыт для расширения, но закрыт для изменения. | `PartyFormatter`, `PartyInputScenario` |
