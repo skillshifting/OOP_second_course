@@ -1,5 +1,3 @@
-"""Модульные тесты практической работы; зависимости подменяются mock-объектами."""
-
 import unittest
 from unittest.mock import MagicMock, call, patch
 
